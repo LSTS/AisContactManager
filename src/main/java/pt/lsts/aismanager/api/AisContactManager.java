@@ -8,18 +8,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.function.Function;
 
-public abstract class AisContactManager {
+/**
+ * Singleton class to maintain an histoy of AIS contacts
+ * */
+public class AisContactManager {
     /**
-     *  Save snapshots in a persistent manner
-     *  @im
+     * Singleton object
      * */
-    public abstract void saveContacts();
+    protected static AisContactManager manager;
 
-    /**
-     * Load save snapshots
-     * */
-    public abstract void loadContacts();
+    public static void getInstance() {
+
+    }
+
+    private AisContactManager() {
+        // nothing
+    }
 
     /**
      * Contains the several contact's snapshots
@@ -32,13 +38,15 @@ public abstract class AisContactManager {
                                 long timestamp, String label) {
         ShipAisSnapshot shipSnapshot = new ShipAisSnapshot(mnsi, sog, cog, heading, latRads, lonRads, timestamp, label);
 
-        Stack<ShipAisSnapshot> stack = snapshots.get(mnsi);
-        if (stack == null) {
-            stack = new Stack<>();
-            snapshots.put(mnsi, stack);
-        }
+        synchronized (manager.snapshots) {
+            Stack<ShipAisSnapshot> stack = manager.snapshots.get(mnsi);
+            if (stack == null) {
+                stack = new Stack<>();
+                manager.snapshots.put(mnsi, stack);
+            }
 
-        stack.push(shipSnapshot);
+            stack.push(shipSnapshot);
+        }
     }
 
     /**
@@ -47,7 +55,7 @@ public abstract class AisContactManager {
      * @return List of ShipAisSnapshot
      * */
     public List<ShipAisSnapshot> getShips() {
-        return getShips(System.currentTimeMillis());
+        return manager.getShips(System.currentTimeMillis());
     }
 
     /**
@@ -58,17 +66,37 @@ public abstract class AisContactManager {
      * @return List of ShipAisSnapshot
      * */
     public List<ShipAisSnapshot> getShips(long timestampMs) {
-        final List<ShipAisSnapshot> ships = new ArrayList<>(snapshots.size());
+        synchronized (manager.snapshots) {
+            final List<ShipAisSnapshot> ships = new ArrayList<>(manager.snapshots.size());
 
-        for (Map.Entry entry : snapshots.entrySet()) {
-            Optional<ShipAisSnapshot> ret = ((Stack<ShipAisSnapshot>) entry.getValue())
-                    .stream()
-                    .filter(s -> s.getTimestampMs() <= timestampMs)
-                    .findFirst();
+            for (Map.Entry entry : manager.snapshots.entrySet()) {
+                Optional<ShipAisSnapshot> ret = ((Stack<ShipAisSnapshot>) entry.getValue())
+                        .stream()
+                        .filter(s -> s.getTimestampMs() <= timestampMs)
+                        .findFirst();
 
-            ret.ifPresent(ships::add);
+                ret.ifPresent(ships::add);
+            }
+            return ships;
         }
+    }
 
-        return ships;
+    /**
+     *  Save snapshots in a persistent manner. Thread-safe
+     *  @param saveFunction The function that does the saving
+     * */
+    public boolean saveContacts(Function<HashMap<Integer, Stack<ShipAisSnapshot>>, Boolean> saveFunction) {
+        synchronized (snapshots) {
+            return saveFunction.apply(snapshots);
+        }
+    }
+
+    /**
+     * Load saved snapshots. Thread-safe
+     * */
+    public void loadContacts(HashMap<Integer, Stack<ShipAisSnapshot>> contacts) {
+        synchronized (snapshots) {
+            this.snapshots.putAll(contacts);
+        }
     }
 }
