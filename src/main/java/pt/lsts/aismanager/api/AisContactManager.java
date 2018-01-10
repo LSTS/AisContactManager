@@ -33,8 +33,10 @@ public abstract class AisContactManager {
         ShipAisSnapshot shipSnapshot = new ShipAisSnapshot(mnsi, sog, cog, heading, latRads, lonRads, timestamp, label);
 
         Stack<ShipAisSnapshot> stack = snapshots.get(mnsi);
-        if (stack == null)
+        if (stack == null) {
             stack = new Stack<>();
+            snapshots.put(mnsi, stack);
+        }
 
         stack.push(shipSnapshot);
     }
