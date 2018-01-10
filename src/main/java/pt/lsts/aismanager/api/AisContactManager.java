@@ -26,7 +26,7 @@ public abstract class AisContactManager {
      * throughout (and sorted by) time
      * Map from MNSI to Stack of snapshots
      */
-    private HashMap<Integer, Stack<ShipAisSnapshot>> snapshots;
+    private final HashMap<Integer, Stack<ShipAisSnapshot>> snapshots = new HashMap<>();
 
     public void setShipPosition(int mnsi, double sog, double cog, double heading, double latRads, double lonRads,
                                 long timestamp, String label) {
