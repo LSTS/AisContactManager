@@ -82,7 +82,7 @@ public class AisContactManager {
     }
 
     /**
-     *  Save snapshots in a persistent manner. Thread-safe
+     *  Save snapshots in a persistent manner, provided as argument. Thread-safe
      *  @param saveFunction The function that does the saving
      * */
     public boolean saveContacts(Function<HashMap<Integer, Stack<ShipAisSnapshot>>, Boolean> saveFunction) {
