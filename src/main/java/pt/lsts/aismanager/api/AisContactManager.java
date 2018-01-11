@@ -24,6 +24,8 @@ public class AisContactManager {
      * @return manager singleton instace of AisContactManager
      * */
     public static AisContactManager getInstance() {
+        if(manager == null)
+            manager = new AisContactManager();
         return manager;
     }
 
