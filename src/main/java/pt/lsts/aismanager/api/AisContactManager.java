@@ -19,8 +19,12 @@ public class AisContactManager {
      * */
     protected static AisContactManager manager;
 
-    public static void getInstance() {
-
+    /**
+     * Get or create and instance of AisContactManager
+     * @return manager singleton instace of AisContactManager
+     * */
+    public static AisContactManager getInstance() {
+        return manager;
     }
 
     private AisContactManager() {
@@ -34,15 +38,15 @@ public class AisContactManager {
      */
     private final HashMap<Integer, Stack<ShipAisSnapshot>> snapshots = new HashMap<>();
 
-    public void setShipPosition(int mnsi, double sog, double cog, double heading, double latRads, double lonRads,
+    public void setShipPosition(int mmsi, double sog, double cog, double heading, double latRads, double lonRads,
                                 long timestamp, String label) {
-        ShipAisSnapshot shipSnapshot = new ShipAisSnapshot(mnsi, sog, cog, heading, latRads, lonRads, timestamp, label);
+        ShipAisSnapshot shipSnapshot = new ShipAisSnapshot(mmsi, sog, cog, heading, latRads, lonRads, timestamp, label);
 
         synchronized (manager.snapshots) {
-            Stack<ShipAisSnapshot> stack = manager.snapshots.get(mnsi);
+            Stack<ShipAisSnapshot> stack = manager.snapshots.get(mmsi);
             if (stack == null) {
                 stack = new Stack<>();
-                manager.snapshots.put(mnsi, stack);
+                manager.snapshots.put(mmsi, stack);
             }
 
             stack.push(shipSnapshot);
