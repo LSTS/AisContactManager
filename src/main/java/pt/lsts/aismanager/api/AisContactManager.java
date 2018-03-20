@@ -53,6 +53,14 @@ public class AisContactManager {
         }
     }
 
+    public HashMap<Integer, Stack<ShipAisSnapshot>> getAllSnapshots() {
+        HashMap<Integer, Stack<ShipAisSnapshot>> clone;
+        synchronized (manager.snapshots) {
+            clone = (HashMap<Integer, Stack<ShipAisSnapshot>>) manager.snapshots.clone();
+        }
+        return clone;
+    }
+
     /**
      * Get a list of all current AIS snapshots of known vehicles,
      * or the closest
