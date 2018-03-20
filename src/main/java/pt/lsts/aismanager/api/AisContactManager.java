@@ -17,15 +17,13 @@ public class AisContactManager {
     /**
      * Singleton object
      * */
-    protected static AisContactManager manager;
+    protected static final AisContactManager manager = new AisContactManager();
 
     /**
      * Get or create and instance of AisContactManager
      * @return manager singleton instace of AisContactManager
      * */
     public static AisContactManager getInstance() {
-        if(manager == null)
-            manager = new AisContactManager();
         return manager;
     }
 
