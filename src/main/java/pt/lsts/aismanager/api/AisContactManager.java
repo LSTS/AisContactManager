@@ -111,4 +111,30 @@ public class AisContactManager {
             this.snapshots.putAll(contacts);
         }
     }
+
+    public static void main(String[] args) {
+        AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 1233, "A");
+        AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 2000, "A");
+        AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 2423, "A");
+        AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 3023, "A");
+        AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 3342, "A");
+        AisContactManager.getInstance().setShipPosition(2, 2, 2, 2, 0, 0, 213, "B");
+        AisContactManager.getInstance().setShipPosition(2, 2, 2, 2, 0, 0, 768, "B");
+        AisContactManager.getInstance().setShipPosition(2, 2, 2, 2, 0, 0, 1234, "B");
+        AisContactManager.getInstance().setShipPosition(2, 2, 2, 2, 0, 0, 1762, "B");
+        AisContactManager.getInstance().setShipPosition(2, 2, 2, 2, 0, 0, 2423, "B");
+        AisContactManager.getInstance().setShipPosition(2, 2, 2, 2, 0, 0, 2987, "B");
+        AisContactManager.getInstance().setShipPosition(3, 2, 2, 2, 0, 0, 1256, "C");
+
+        List<ShipAisSnapshot> res = AisContactManager.getInstance().getShips(2000);
+
+        System.out.println(" ::: " + AisContactManager.getInstance().getAllSnapshots().size());
+        System.out.println(" ::: " + res.size());
+        res.stream().forEach(e -> System.out.println(" :::: " + e.getLabel() + " " + e.getTimestampMs()));
+
+        if (res.get(0).getTimestampMs() != 1233 ||
+                res.get(1).getTimestampMs() != 213 ||
+                res.get(2).getTimestampMs() != 1256)
+            throw new Error("Failed tests");
+    }
 }
