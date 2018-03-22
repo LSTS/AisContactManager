@@ -4,6 +4,8 @@ package pt.lsts.aismanager;
  * This class represents a snapshot in time of a certain Ais ship
  * */
 public class ShipAisSnapshot {
+    private final double KNOTS_TO_MPS = 0.514444444;
+
     private int mmsi;
     private double sog;
     private double cog;
@@ -45,10 +47,17 @@ public class ShipAisSnapshot {
     }
 
     /**
-     * Ship's speed over ground
+     * Ship's speed over ground in knots
      * */
     public double getSog() {
         return sog;
+    }
+
+    /**
+     * Ship's speed over ground in meters per second
+     * */
+    public double getSogMps() {
+        return sog * KNOTS_TO_MPS;
     }
 
     /**
