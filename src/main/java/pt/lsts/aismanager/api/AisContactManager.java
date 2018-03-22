@@ -93,6 +93,38 @@ public class AisContactManager {
         }
     }
 
+    // https://stackoverflow.com/a/19561470/2183904
+    private HashMap<String, ShipAisSnapshot> getFutureSnapshots(long offsetMs) {
+        HashMap<String, ShipAisSnapshot> futureSnapshots = new HashMap<>();
+
+        // get current snapshots
+        List<ShipAisSnapshot> curr = getShips();
+
+        for (ShipAisSnapshot ais : curr) {
+            // earth radius
+            final double R = 6371;
+            double distance = ais.getSogMps() * (offsetMs / 1000);
+            double bearing = Math.toDegrees(ais.getCog());
+
+            double lat = Math.toDegrees(ais.getLatRads());
+            double lon = Math.toDegrees(ais.getLonRads());
+
+            double lat2 = Math.asin(Math.sin(Math.PI / 180 * lat) * Math.cos(distance / R) +
+                    Math.cos(Math.PI / 180 * lat) * Math.sin(distance / R) * Math.cos(Math.PI / 180 * bearing));
+            double lon2 = Math.PI / 180 * lon + Math.atan2(Math.sin( Math.PI / 180 * bearing) *
+                    Math.sin(distance / R) * Math.cos( Math.PI / 180 * lat ), Math.cos(distance / R) - Math.sin( Math.PI / 180 * lat) * Math.sin(lat2));
+
+            lat2 = Math.toRadians(180 / Math.PI * lat2);
+            lon2 = Math.toRadians(180 / Math.PI * lon2);
+
+            ShipAisSnapshot snap = new ShipAisSnapshot(ais.getMmsi(), ais.getSog(), ais.getCog(), ais.getHeading(),
+                    lat2, lon2, ais.getTimestampMs() + offsetMs, ais.getLabel());
+
+            futureSnapshots.put(ais.getLabel(), snap);
+        }
+        return futureSnapshots;
+    }
+
     /**
      *  Save snapshots in a persistent manner, provided as argument. Thread-safe
      *  @param saveFunction The function that does the saving
