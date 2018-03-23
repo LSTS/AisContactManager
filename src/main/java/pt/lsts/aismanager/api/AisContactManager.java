@@ -2,12 +2,7 @@ package pt.lsts.aismanager.api;
 
 import pt.lsts.aismanager.ShipAisSnapshot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -36,16 +31,16 @@ public class AisContactManager {
      * throughout (and sorted by) time
      * Map from MNSI to Stack of snapshots
      */
-    private final HashMap<Integer, Stack<ShipAisSnapshot>> snapshots = new HashMap<>();
+    private final HashMap<Integer, Deque<ShipAisSnapshot>> snapshots = new HashMap<>();
 
     public void setShipPosition(int mmsi, double sog, double cog, double heading, double latRads, double lonRads,
                                 long timestamp, String label) {
         ShipAisSnapshot shipSnapshot = new ShipAisSnapshot(mmsi, sog, cog, heading, latRads, lonRads, timestamp, label);
 
         synchronized (manager.snapshots) {
-            Stack<ShipAisSnapshot> stack = manager.snapshots.get(mmsi);
+            Deque<ShipAisSnapshot> stack = manager.snapshots.get(mmsi);
             if (stack == null) {
-                stack = new Stack<>();
+                stack = new ArrayDeque<>();
                 manager.snapshots.put(mmsi, stack);
             }
 
@@ -53,10 +48,10 @@ public class AisContactManager {
         }
     }
 
-    public HashMap<Integer, Stack<ShipAisSnapshot>> getAllSnapshots() {
-        HashMap<Integer, Stack<ShipAisSnapshot>> clone;
+    public HashMap<Integer, Deque<ShipAisSnapshot>> getAllSnapshots() {
+        HashMap<Integer, Deque<ShipAisSnapshot>> clone;
         synchronized (manager.snapshots) {
-            clone = (HashMap<Integer, Stack<ShipAisSnapshot>>) manager.snapshots.clone();
+            clone = (HashMap<Integer, Deque<ShipAisSnapshot>>) manager.snapshots.clone();
         }
         return clone;
     }
@@ -82,12 +77,15 @@ public class AisContactManager {
             final List<ShipAisSnapshot> ships = new ArrayList<>(manager.snapshots.size());
 
             for (Map.Entry entry : manager.snapshots.entrySet()) {
-                Optional<ShipAisSnapshot> ret = ((Stack<ShipAisSnapshot>) entry.getValue())
-                        .stream()
-                        .filter(s -> s.getTimestampMs() <= timestampMs)
-                        .findFirst();
+                Deque<ShipAisSnapshot> stack = (Deque<ShipAisSnapshot>) entry.getValue();
+                for (Iterator<ShipAisSnapshot> it1 = stack.iterator(); it1.hasNext(); ) {
+                    ShipAisSnapshot it = it1.next();
+                    if(it.getTimestampMs() > timestampMs)
+                        continue;
 
-                ret.ifPresent(ships::add);
+                    ships.add(it);
+                    break;
+                }
             }
             return ships;
         }
@@ -129,23 +127,14 @@ public class AisContactManager {
      *  Save snapshots in a persistent manner, provided as argument. Thread-safe
      *  @param saveFunction The function that does the saving
      * */
-    public boolean saveContacts(Function<HashMap<Integer, Stack<ShipAisSnapshot>>, Boolean> saveFunction) {
+    public boolean saveContacts(Function<HashMap<Integer, Deque<ShipAisSnapshot>>, Boolean> saveFunction) {
         synchronized (snapshots) {
             return saveFunction.apply(snapshots);
         }
     }
 
-    /**
-     * Load saved snapshots. Thread-safe
-     * */
-    public void loadContacts(HashMap<Integer, Stack<ShipAisSnapshot>> contacts) {
-        synchronized (snapshots) {
-            this.snapshots.putAll(contacts);
-        }
-    }
-
     public static void main(String[] args) {
-        AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 1233, "A");
+        AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, System.currentTimeMillis(), "A");
         AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 2000, "A");
         AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 2423, "A");
         AisContactManager.getInstance().setShipPosition(1, 2, 2, 2, 0, 0, 3023, "A");
@@ -164,9 +153,24 @@ public class AisContactManager {
         System.out.println(" ::: " + res.size());
         res.stream().forEach(e -> System.out.println(" :::: " + e.getLabel() + " " + e.getTimestampMs()));
 
-        if (res.get(0).getTimestampMs() != 1233 ||
-                res.get(1).getTimestampMs() != 213 ||
+        if (res.get(0).getTimestampMs() != 2000 ||
+                res.get(1).getTimestampMs() != 1762 ||
                 res.get(2).getTimestampMs() != 1256)
             throw new Error("Failed tests");
+
+//        AisContactManager.getInstance().setShipPosition(1, 3.88768898, Math.toRadians(30), Math.toRadians(30),
+//                Math.toRadians(60), Math.toRadians(25), 10, "A");
+//        ShipAisSnapshot future = AisContactManager.getInstance().getFutureSnapshots(1).get("A");
+//
+//        System.out.println(future.getLatRads() + " " + future.getLonRads());
+    }
+
+    /**
+     * Load saved snapshots. Thread-safe
+     * */
+    public void loadContacts(HashMap<Integer, Deque<ShipAisSnapshot>> contacts) {
+        synchronized (snapshots) {
+            this.snapshots.putAll(contacts);
+        }
     }
 }
