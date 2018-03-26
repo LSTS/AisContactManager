@@ -88,6 +88,14 @@ public class ShipAisSnapshot {
         return lonRads;
     }
 
+    public double getLatDegs() {
+        return Math.toDegrees(latRads);
+    }
+
+    public double getLonDegs() {
+        return Math.toDegrees(lonRads);
+    }
+
     /**
      * This snaptshot's timestamp in Milliseconds
      * */

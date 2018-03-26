@@ -2,8 +2,10 @@ package pt.lsts.aismanager.api;
 
 import pt.lsts.aismanager.ShipAisSnapshot;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Singleton class to maintain an histoy of AIS contacts
@@ -91,36 +93,55 @@ public class AisContactManager {
         }
     }
 
+    /***
+     * Get future snapshots from all the known systems
+     */
     // https://stackoverflow.com/a/19561470/2183904
-    private HashMap<String, ShipAisSnapshot> getFutureSnapshots(long offsetMs) {
+    public HashMap<String, ShipAisSnapshot> getFutureSnapshots(long offsetMs) {
         HashMap<String, ShipAisSnapshot> futureSnapshots = new HashMap<>();
 
         // get current snapshots
         List<ShipAisSnapshot> curr = getShips();
 
         for (ShipAisSnapshot ais : curr) {
-            // earth radius
-            final double R = 6371;
-            double distance = ais.getSogMps() * (offsetMs / 1000);
-            double bearing = Math.toDegrees(ais.getCog());
-
-            double lat = Math.toDegrees(ais.getLatRads());
-            double lon = Math.toDegrees(ais.getLonRads());
-
-            double lat2 = Math.asin(Math.sin(Math.PI / 180 * lat) * Math.cos(distance / R) +
-                    Math.cos(Math.PI / 180 * lat) * Math.sin(distance / R) * Math.cos(Math.PI / 180 * bearing));
-            double lon2 = Math.PI / 180 * lon + Math.atan2(Math.sin( Math.PI / 180 * bearing) *
-                    Math.sin(distance / R) * Math.cos( Math.PI / 180 * lat ), Math.cos(distance / R) - Math.sin( Math.PI / 180 * lat) * Math.sin(lat2));
-
-            lat2 = Math.toRadians(180 / Math.PI * lat2);
-            lon2 = Math.toRadians(180 / Math.PI * lon2);
-
-            ShipAisSnapshot snap = new ShipAisSnapshot(ais.getMmsi(), ais.getSog(), ais.getCog(), ais.getHeading(),
-                    lat2, lon2, ais.getTimestampMs() + offsetMs, ais.getLabel());
-
+            ShipAisSnapshot snap = getFutureSnapshot(ais.getMmsi(), offsetMs);
             futureSnapshots.put(ais.getLabel(), snap);
         }
         return futureSnapshots;
+    }
+
+    /***
+     * Get multiple future snapshots from a given system
+     */
+    public List<ShipAisSnapshot> getFutureSnapshot(int mmsi, long... offsetsMs) {
+        return Arrays.stream(offsetsMs).mapToObj(offset -> getFutureSnapshot(mmsi, offset))
+                .collect(Collectors.toCollection(() -> new ArrayList<>(offsetsMs.length)));
+    }
+
+    /***
+     * Get future snapshot from the given system
+     */
+    public ShipAisSnapshot getFutureSnapshot(int mmsi, long offsetMs) {
+        final double R = 6371;
+        ShipAisSnapshot ais = snapshots.get(mmsi).getFirst();
+        double distance = ais.getSogMps() * (offsetMs / 1000);
+        double bearing = Math.toDegrees(ais.getCog());
+
+        double lat = Math.toDegrees(ais.getLatRads());
+        double lon = Math.toDegrees(ais.getLonRads());
+
+        double lat2 = Math.asin(Math.sin(Math.PI / 180 * lat) * Math.cos(distance / R) +
+                Math.cos(Math.PI / 180 * lat) * Math.sin(distance / R) * Math.cos(Math.PI / 180 * bearing));
+        double lon2 = Math.PI / 180 * lon + Math.atan2(Math.sin( Math.PI / 180 * bearing) *
+                Math.sin(distance / R) * Math.cos( Math.PI / 180 * lat ), Math.cos(distance / R) - Math.sin( Math.PI / 180 * lat) * Math.sin(lat2));
+
+        lat2 = Math.toRadians(180 / Math.PI * lat2);
+        lon2 = Math.toRadians(180 / Math.PI * lon2);
+
+        ShipAisSnapshot snap = new ShipAisSnapshot(ais.getMmsi(), ais.getSog(), ais.getCog(), ais.getHeading(),
+                lat2, lon2, ais.getTimestampMs() + offsetMs, ais.getLabel());
+
+        return snap;
     }
 
     /**
