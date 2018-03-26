@@ -35,9 +35,12 @@ public class AisContactManager {
      */
     private final HashMap<Integer, Deque<ShipAisSnapshot>> snapshots = new HashMap<>();
 
-    public void setShipPosition(int mmsi, double sog, double cog, double heading, double latRads, double lonRads,
+    /***
+     *
+     * */
+    public void setShipPosition(int mmsi, double sogKnots, double cog, double heading, double latRads, double lonRads,
                                 long timestamp, String label) {
-        ShipAisSnapshot shipSnapshot = new ShipAisSnapshot(mmsi, sog, cog, heading, latRads, lonRads, timestamp, label);
+        ShipAisSnapshot shipSnapshot = new ShipAisSnapshot(mmsi, sogKnots, cog, heading, latRads, lonRads, timestamp, label);
 
         synchronized (manager.snapshots) {
             Deque<ShipAisSnapshot> stack = manager.snapshots.get(mmsi);

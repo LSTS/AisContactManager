@@ -19,20 +19,20 @@ public class ShipAisSnapshot {
      * Create a snapshot of ship's AIS information
      *
      * @param mmsi Maritime Mobile Service Identity
-     * @param sog Speed over ground
-     * @param cog Course over ground
-     * @param heading Heading
+     * @param sogKnots Speed over ground in knots
+     * @param cogRads Course over ground in radians
+     * @param headingRads Heading in radians
      * @param latRads Latitude in radians
      * @param lonRads Longitude in radians
      * @param timestampMs Timestamp in Milliseconds
      * @param label AIS label
      * */
-    public ShipAisSnapshot(int mmsi, double sog, double cog, double heading, double latRads, double lonRads,
+    public ShipAisSnapshot(int mmsi, double sogKnots, double cogRads, double headingRads, double latRads, double lonRads,
                            long timestampMs, String label) {
         this.mmsi = mmsi;
-        this.sog = sog;
-        this.cog = cog;
-        this.heading = heading;
+        this.sog = sogKnots;
+        this.cog = cogRads;
+        this.heading = headingRads;
         this.latRads = latRads;
         this.lonRads = lonRads;
         this.timestampMs = timestampMs;
@@ -68,7 +68,7 @@ public class ShipAisSnapshot {
     }
 
     /**
-     * Ship's Heading
+     * Ship's Heading in radians
      * */
     public double getHeading() {
         return heading;
@@ -88,10 +88,16 @@ public class ShipAisSnapshot {
         return lonRads;
     }
 
+    /**
+     * Ship's latitude in degrees
+     * */
     public double getLatDegs() {
         return Math.toDegrees(latRads);
     }
 
+    /**
+     * Ship's longitude in degrees
+     * */
     public double getLonDegs() {
         return Math.toDegrees(lonRads);
     }
