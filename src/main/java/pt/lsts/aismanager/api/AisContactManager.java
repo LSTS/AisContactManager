@@ -124,7 +124,7 @@ public class AisContactManager {
     public ShipAisSnapshot getFutureSnapshot(int mmsi, long offsetMs) {
         final double R = 6371;
         ShipAisSnapshot ais = snapshots.get(mmsi).getFirst();
-        double distance = ais.getSogMps() * (offsetMs / 1000);
+        double distance = ais.getSogMps() * (offsetMs / 1000) / 1000;
         double bearing = Math.toDegrees(ais.getCog());
 
         double lat = Math.toDegrees(ais.getLatRads());
